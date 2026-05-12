@@ -1,0 +1,16 @@
+{
+  "name": "tool-trade",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Token Pump Radar - lightweight crypto analytics web app that ranks tokens by a Final Pump Score (FPS)",
+  "main": "server/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {}
+}
