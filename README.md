@@ -1,38 +1,51 @@
 # Tool-Trade — Token Pump Radar
 
-Lightweight crypto analytics web app that ranks tokens by a **Final Pump Score
-(FPS)** so you can spot early pump / hype momentum before it fully breaks out.
+Next.js crypto analytics dashboard that ranks tokens by a **Final Pump
+Score (FPS)**. Deployed on Vercel, data from DexScreener (public API,
+no key required).
 
-- Zero runtime dependencies (Node.js built-ins only).
-- Data source: [DexScreener](https://docs.dexscreener.com/api/reference) public
-  API. Frontend never calls third-party APIs directly — everything is cached
-  server-side.
-- Backend refreshes every 20 s (configurable). Frontend polls the cached
-  snapshot.
-- Compact dark-mode table: search, sort by FPS, filter by Trending / New /
-  High Score.
+## Deploy to Vercel
 
-## Quick start
+1. Push this repo to GitHub (already done).
+2. On vercel.com → **Add New → Project → Import** this repo.
+3. Accept the defaults (framework: Next.js, build: `next build`, output: `.next`).
+4. Deploy. No environment variables required.
+
+## Local dev
 
 ```bash
-node server/index.js        # or: npm start
+npm install
+npm run dev        # http://localhost:3000
 ```
 
-Open `http://localhost:3000`.
+## Architecture
 
-Configuration via environment variables:
+```
+app/
+  api/
+    tokens/route.js   GET /api/tokens   (the only data endpoint the frontend calls)
+    health/route.js   GET /api/health
+  layout.js           Root HTML layout
+  page.js             Home page (server component shell)
+  RadarTable.js       Client component: fetches /api/tokens, renders the table
+  globals.css
+lib/
+  dexscreener.js      DexScreener HTTP client (public API, no key)
+  scoring.js          FPS formula engine (all components normalised to [0,1])
+  pipeline.js         fetch -> filter -> score -> sort -> top 100
+```
 
-| Variable               | Default | Description                              |
-| ---------------------- | ------- | ---------------------------------------- |
-| `PORT`                 | `3000`  | HTTP port                                |
-| `REFRESH_INTERVAL_MS`  | `20000` | Background refresh cadence               |
+- **Frontend** only calls `/api/tokens`. It never talks to DexScreener directly.
+- **API route** runs on the Node.js runtime with `revalidate = 15` so the
+  CDN serves the same response to every visitor for 15 s (keeps upstream
+  request volume low).
+- **Error handling**: the route never throws — it returns `{ ok: false, error }`
+  with an empty `tokens` array. The frontend surfaces that in the table.
 
 ## Scoring
 
-FPS is a weighted sum (0–100) of six normalised components:
-
 ```
-FPS = 25·VAI_norm + 20·PMI_norm + 20·BPR + 15·LSS + 10·SMS + 10·AS
+FPS = 25·VAI_norm + 20·PMI_norm + 20·BPR + 15·LSS + 10·SMS_norm + 10·AS_norm
 ```
 
 | Component | What it measures                 | Source                                 |
@@ -40,7 +53,7 @@ FPS = 25·VAI_norm + 20·PMI_norm + 20·BPR + 15·LSS + 10·SMS + 10·AS
 | VAI       | `V1h / (V6h / 6)` — vol. accel.  | DexScreener `volume.h1`, `volume.h6`   |
 | PMI       | 1h price change (%)              | DexScreener `priceChange.h1`           |
 | BPR       | `buys / (buys + sells)`, 1h      | DexScreener `txns.h1.buys/sells` (count proxy — per-side USD volumes are not exposed) |
-| LSS       | `liquidity_now / liquidity_init` | first-seen liquidity cached per pair   |
+| LSS       | `liquidity_now / liquidity_init` | defaults to `1.0` on Vercel serverless (no persistent baseline) |
 | SMS       | Smart-money proxy                | BPR + 5m-vs-1h txn acceleration        |
 | AS        | Age bucket                       | DexScreener `pairCreatedAt`            |
 
@@ -53,7 +66,7 @@ Status labels:
 | 40–59   | SIDEWAYS           |
 | < 40    | NO TRADE           |
 
-## Filtering rules (enforced server-side)
+## Filtering (server-side)
 
 - Top 100 by FPS.
 - Liquidity must be ≥ `$10,000`.
@@ -63,21 +76,5 @@ Status labels:
 ## API
 
 - `GET /api/tokens?filter=all|trending|new|highscore&search=<q>&limit=<n>` —
-  returns the cached snapshot.
-- `GET /api/health` — uptime / refresh counters.
-
-## Layout
-
-```
-server/
-  index.js              HTTP server (Node built-in http)
-  cache.js              Background refresh loop + in-memory snapshot
-  scoring.js            FPS formula engine
-  config.js             Env-driven config
-  sources/
-    dexscreener.js      Upstream HTTP client
-public/
-  index.html            Dark-mode compact table
-  styles.css
-  app.js                Frontend polling + rendering
-```
+  filtered snapshot, always JSON.
+- `GET /api/health` — liveness probe.

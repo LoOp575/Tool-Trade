@@ -41,7 +41,6 @@ a:hover { text-decoration: underline; }
   top: 0;
   z-index: 2;
 }
-
 .brand { display: flex; align-items: baseline; gap: 10px; }
 .brand-dot {
   width: 8px; height: 8px; border-radius: 50%;
@@ -64,6 +63,7 @@ a:hover { text-decoration: underline; }
 .chip-idle { color: var(--muted); }
 .chip-ok { color: var(--accent); border-color: var(--accent-dim); }
 .chip-err { color: var(--danger); border-color: #4a1b18; }
+.chip-loading { color: var(--info); border-color: #1b3348; }
 
 .controls {
   display: flex; gap: 10px; align-items: center;
@@ -72,7 +72,7 @@ a:hover { text-decoration: underline; }
   background: var(--bg);
   flex-wrap: wrap;
 }
-#search {
+.search-input {
   flex: 1 1 240px;
   min-width: 200px;
   background: var(--bg-elev);
@@ -82,7 +82,7 @@ a:hover { text-decoration: underline; }
   border-radius: 6px;
   font: inherit;
 }
-#search:focus { outline: none; border-color: var(--info); }
+.search-input:focus { outline: none; border-color: var(--info); }
 
 .filters { display: flex; gap: 6px; flex-wrap: wrap; }
 .filter {
@@ -108,7 +108,6 @@ main { padding: 0 16px 16px; }
   border-collapse: collapse;
   font-variant-numeric: tabular-nums;
 }
-
 .tokens thead th {
   position: sticky;
   top: 42px;
@@ -125,7 +124,6 @@ main { padding: 0 16px 16px; }
 }
 .tokens thead th.col-rank,
 .tokens thead th.col-token { text-align: left; }
-
 .tokens tbody td {
   padding: 6px 10px;
   border-bottom: 1px solid var(--border);
@@ -134,7 +132,6 @@ main { padding: 0 16px 16px; }
 }
 .tokens tbody td.col-rank,
 .tokens tbody td.col-token { text-align: left; }
-
 .tokens tbody tr:hover td { background: var(--bg-row-hover); }
 
 .col-rank { width: 36px; color: var(--muted); }
@@ -177,6 +174,12 @@ tr.placeholder td {
   text-align: center !important;
   padding: 32px 10px;
 }
+tr.error-row td {
+  color: var(--danger);
+  text-align: center !important;
+  padding: 24px 10px;
+  font-size: 12px;
+}
 
 .footnote {
   display: flex;
@@ -203,11 +206,9 @@ tr.placeholder td {
 .tag-no { color: var(--muted); }
 
 @media (max-width: 720px) {
-  .col-num:nth-of-type(4), /* Vol 24h */
+  .tokens thead th:nth-child(5),
   .tokens tbody td:nth-child(5),
-  .tokens thead th:nth-child(5) { display: none; }
-  .col-num:nth-of-type(6), /* MC/FDV */
-  .tokens tbody td:nth-child(7),
-  .tokens thead th:nth-child(7) { display: none; }
+  .tokens thead th:nth-child(7),
+  .tokens tbody td:nth-child(7) { display: none; }
   .token-name { display: none; }
 }
