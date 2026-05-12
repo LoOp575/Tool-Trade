@@ -1,14 +1,17 @@
 // Route handler for GET /api/tokens.
 // Runs on the Node.js runtime (not Edge) so we have AbortController etc.
-// `revalidate = 15` caches the response for 15 seconds on Vercel, matching
-// the frontend polling cadence and keeping DexScreener calls low-cost.
+//
+// We mark the route as `force-dynamic` so Next.js doesn't try to evaluate it
+// at build time (no network during `next build`). The upstream DexScreener
+// fetches in `lib/dexscreener.js` still set `next: { revalidate: 15 }`, which
+// means concurrent request traffic is collapsed onto one upstream call every
+// 15 seconds via Next's Data Cache.
 
 import { NextResponse } from 'next/server';
-import { buildSnapshot } from '@/lib/pipeline';
+import { buildSnapshot } from '../../../lib/pipeline';
 
 export const runtime = 'nodejs';
-export const revalidate = 15;
-export const dynamic = 'force-dynamic'; // always re-evaluate, but upstream fetch is still cached via `next.revalidate`
+export const dynamic = 'force-dynamic';
 
 function matchFilter(token, filter) {
   switch (filter) {
